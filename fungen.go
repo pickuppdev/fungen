@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-//go:generate $GOPATH/bin/fungen -types "Generator" -methods Filter,Each
+//go:generate $GOPATH/bin/fungen -types "Generator" -methods Filter,Each,Map
 
 // Generator - one generator (function and information about generate)
 type Generator struct {
@@ -21,12 +21,13 @@ type Generator struct {
 }
 
 var (
-	packageName = flag.String("package", "main", "(Optional) Name of the package.")
-	types       = flag.String("types", "", "Comma-separated list of type names, eg. 'int,string,CustomType'. The values can themselves be colon (:) separated to specify the names of entities in the generated, eg: int:I,string:Str,CustomType:CT.")
-	methods     = flag.String("methods", "", "Comma-separated list of methods to generate, eg 'Map,Filter'. By default generate all methods.")
-	outputName  = flag.String("filename", "fungen_auto.go", "(Optional) Filename for generated package.")
-	testrun     = flag.Bool("test", false, "whether to display the generated code instead of writing out to a file.")
-	generators  = GeneratorList{
+	packageName  = flag.String("package", "main", "(Optional) Name of the package.")
+	types        = flag.String("types", "", "Comma-separated list of type names, eg. 'int,string,CustomType'. The values can themselves be colon (:) separated to specify the names of entities in the generated, eg: int:I,string:Str,CustomType:CT.")
+	methods      = flag.String("methods", "", "Comma-separated list of methods to generate, eg 'Map,Filter'. By default generate all methods.")
+	outputName   = flag.String("filename", "fungen_auto.go", "(Optional) Filename for generated package.")
+	testrun      = flag.Bool("test", false, "whether to display the generated code instead of writing out to a file.")
+	needMapToMap = flag.Bool("needMapToMap", true, "Need multiple map to map")
+	generators   = GeneratorList{
 		{
 			name:         "Map",
 			method:       getMapFunction,
@@ -123,6 +124,13 @@ func main() {
 	if len(*types) == 0 {
 		flag.Usage()
 		os.Exit(2)
+	}
+
+	if !*needMapToMap {
+		generators = generators.Map(func(g Generator) Generator {
+			g.needMapToMap = false
+			return g
+		})
 	}
 
 	methodsMap := getMethodsMap(*methods)
@@ -254,7 +262,7 @@ func generate(typeName, listname string, m map[string]string, methodsMap map[str
 				code += gen.method(listname, typeName, k, targetTypeName)
 			}
 		} else {
-			code += gen.method(listname, typeName, "", "")
+			code += gen.method(listname, typeName, typeName, "")
 		}
 	})
 
