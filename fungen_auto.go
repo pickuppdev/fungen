@@ -4,6 +4,15 @@ package main
 // GeneratorList is the type for a list that holds members of type Generator
 type GeneratorList []Generator
 
+// Map is a method on GeneratorList that takes a function of type Generator -> Generator and applies it to every member of GeneratorList
+func (l GeneratorList) Map(f func(Generator) Generator) GeneratorList {
+	l2 := make(GeneratorList, len(l))
+	for i, t := range l {
+		l2[i] = f(t)
+	}
+	return l2
+}
+
 // Filter is a method on GeneratorList that takes a function of type Generator -> bool returns a list of type GeneratorList which contains all members from the original list for which the function returned true
 func (l GeneratorList) Filter(f func(Generator) bool) GeneratorList {
 	l2 := []Generator{}
